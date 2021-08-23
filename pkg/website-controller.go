@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"io"
 	"log"
-	"github.com/luksa/website-controller/pkg/v1"
-	"io/ioutil"
+	"github.com/ralitong/k8s-website-controller/pkg/v1"
+    "io/ioutil"
 	"strings"
 )
 
@@ -43,12 +43,12 @@ func main() {
 
 func createWebsite(website v1.Website) {
 	createResource(website, "api/v1", "services", "service-template.json")
-	createResource(website, "apis/extensions/v1beta1", "deployments", "deployment-template.json")
+	createResource(website, "apis/apps/v1", "deployments", "deployment-template.json")
 }
 
 func deleteWebsite(website v1.Website) {
 	deleteResource(website, "api/v1", "services", getName(website));
-	deleteResource(website, "apis/extensions/v1beta1", "deployments", getName(website));
+	deleteResource(website, "apis/apps/v1", "deployments", getName(website));
 }
 
 func createResource(webserver v1.Website, apiGroup string, kind string, filename string) {
@@ -58,9 +58,10 @@ func createResource(webserver v1.Website, apiGroup string, kind string, filename
 		log.Fatal(err)
 	}
 	template := strings.Replace(string(templateBytes), "[NAME]", getName(webserver), -1)
-	template = strings.Replace(template, "[GIT-REPO]", webserver.Spec.GitRepo, -1)
-
-	resp, err := http.Post(fmt.Sprintf("http://localhost:8001/%s/namespaces/%s/%s/", apiGroup, webserver.Metadata.Namespace, kind), "application/json", strings.NewReader(template))
+	template = strings.Replace(template, "[GIT-REPO]", webserver.Spec.GitRepo, -1) 
+    url := fmt.Sprintf("http://localhost:8001/%s/namespaces/%s/%s/", apiGroup, webserver.Metadata.Namespace, kind)
+    log.Println("Rest API resource to be used",url)
+	resp, err := http.Post(url, "application/json", strings.NewReader(template))
 	if err != nil {
 		log.Fatal(err)
 	}
